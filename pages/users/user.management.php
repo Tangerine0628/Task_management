@@ -15,6 +15,70 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
   <!-- Links -->
   <?php include '../../includes/link.php'; ?>
   <style>
+    .btn-prof-status {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+    }
+
+    .btn-prof-status:hover {
+      box-shadow: 0 6px 18px rgba(243, 156, 18, 0.45);
+    }
+
+    .modal-hdr-title.orange svg {
+      color: #f39c12;
+    }
+
+    .status-chip {
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .status-chip.selected {
+      border-color: currentColor;
+      transform: scale(1.05);
+    }
+
+    .status-chip[data-status="Active"] {
+      background: #e8f8f0;
+      color: #27ae60;
+    }
+
+    .status-chip[data-status="Inactive"] {
+      background: #f3f4f6;
+      color: #6c757d;
+    }
+
+    .btn-submit-orange {
+      padding: 9px 22px;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn-submit-orange:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-submit-orange svg {
+      width: 15px;
+      height: 15px;
+    }
+
     .sidebar-toggle {
       background: transparent !important;
       border: none !important;
@@ -145,6 +209,7 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
     .um-list-body {
       flex: 1;
       overflow-y: auto;
+      max-height: 500px;
     }
 
     .um-list-item {
@@ -995,6 +1060,13 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
                     </svg>
                     Change Role
                   </button>
+                  <button class="btn-prof btn-prof-status" onclick="openStatusModal()">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                      <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    Change Status
+                  </button>
                   <button class="btn-prof btn-prof-delete" onclick="openDeleteModal()">
                     <svg viewBox="0 0 24 24" fill="none">
                       <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -1206,7 +1278,6 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
   </div>
 
   <!-- DELETE CONFIRM MODAL -->
-  <!-- DELETE CONFIRM MODAL -->
   <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true">
     <div class="modal-card modal-card-sm">
       <div class="modal-hdr">
@@ -1250,6 +1321,47 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             Yes, Delete
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CHANGE STATUS MODAL -->
+  <div class="modal-overlay" id="statusModal" role="dialog" aria-modal="true">
+    <div class="modal-card modal-card-sm">
+      <div class="modal-hdr">
+        <p class="modal-hdr-title orange">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+            <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Change Status
+        </p>
+        <button type="button" class="modal-close" onclick="closeModal('statusModal')">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <form method="POST" action="userData/ctrl.status.user.php">
+        <input type="hidden" name="user_id" id="statusUserId">
+        <input type="hidden" name="status" id="statusInput">
+        <div class="modal-bdy">
+          <p style="font-size:0.85rem;color:#6c757d;margin:0 0 14px;">Select a new status for <strong
+              id="statusModalName" style="color:#212529;"></strong>:</p>
+          <div class="role-chips">
+            <span class="status-chip" data-status="Active" onclick="selectStatus(this)">Active</span>
+            <span class="status-chip" data-status="Inactive" onclick="selectStatus(this)">Inactive</span>
+          </div>
+        </div>
+        <div class="modal-ftr">
+          <button type="button" class="btn-cancel-modal" onclick="closeModal('statusModal')">Cancel</button>
+          <button type="submit" name="button" class="btn-submit-orange">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
+            Apply Status
           </button>
         </div>
       </form>
@@ -1508,7 +1620,21 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
       showToast(name + ' deleted.');
     }
 
-    /* ── Init ── */
+    function openStatusModal() {
+      if (!selectedUserId) return;
+      const u = allUsers.find(x => x.user_id === selectedUserId);
+      document.getElementById('statusModalName').textContent = u.first_name + ' ' + u.last_name;
+      document.getElementById('statusUserId').value = selectedUserId;
+      document.getElementById('statusInput').value = u.status;
+      document.querySelectorAll('.status-chip').forEach(chip => chip.classList.toggle('selected', chip.dataset.status === u.status));
+      openModal('statusModal');
+    }
+    function selectStatus(chip) {
+      document.querySelectorAll('.status-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      document.getElementById('statusInput').value = chip.dataset.status;
+    }
+
     /* ── Init ── */
     renderList(allUsers);
     document.getElementById('userCountBadge').textContent = allUsers.length ? '(' + allUsers.length + ')' : '';
@@ -1518,6 +1644,7 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
     if (urlParams.get('success') === 'edit') { showToast('User updated successfully!'); window.history.replaceState({}, document.title, window.location.pathname); }
     if (urlParams.get('success') === 'delete') { showToast('User deleted.'); window.history.replaceState({}, document.title, window.location.pathname); }
     if (urlParams.get('success') === 'role') { showToast('Role updated successfully!'); window.history.replaceState({}, document.title, window.location.pathname); }
+    if (urlParams.get('success') === 'status') { showToast('Status updated successfully!'); window.history.replaceState({}, document.title, window.location.pathname); }
 
   </script>
 </body>

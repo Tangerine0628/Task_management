@@ -656,13 +656,14 @@
 
   <?php if (isset($_GET['error'])): ?>
     <script>
+      const msg = <?php echo json_encode($_GET['error']); ?>;
+      document.getElementById('toastMsg').textContent = msg === 'inactive'
+        ? 'Your account has been deactivated. Please contact an administrator.'
+        : 'Incorrect email or password.';
       const toast = document.getElementById('toastNotify');
       toast.style.opacity = '1';
       toast.style.transform = 'translateY(0)';
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-      }, 4000);
+      setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(10px)'; }, 4000);
     </script>
   <?php endif; ?>
 

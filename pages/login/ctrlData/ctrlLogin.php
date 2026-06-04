@@ -10,6 +10,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = mysqli_fetch_assoc($result);
 
     if ($user && password_verify($password, $user['password'])) {
+        if ($user['status'] === 'Inactive') {
+            header('Location: ../login.php?error=inactive');
+            exit;
+        }
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
         $_SESSION['role'] = $user['role'];
