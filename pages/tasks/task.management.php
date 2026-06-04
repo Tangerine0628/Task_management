@@ -15,18 +15,40 @@ if ($current_page < 1) {
 
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $search_safe = mysqli_real_escape_string($conn, $search);
-$search_query = $search !== "" ? "&search=" . urlencode($search) : "";
+$priority_filter = isset($_GET['priority']) ? mysqli_real_escape_string($conn, $_GET['priority']) : '';
+$status_filter = isset($_GET['status']) ? mysqli_real_escape_string($conn, $_GET['status']) : '';
+$sort_filter = isset($_GET['sort']) ? $_GET['sort'] : '';
 
-$where_clause = "";
-
+$conditions = [];
 if ($search_safe !== "") {
-  $where_clause = "WHERE tbl_tasks.task_title LIKE '%$search_safe%' 
-    OR tbl_tasks.description LIKE '%$search_safe%'
-    OR tbl_users.first_name LIKE '%$search_safe%'
-    OR tbl_users.last_name LIKE '%$search_safe%'
-    OR tbl_tasks.priority LIKE '%$search_safe%'
-    OR tbl_tasks.status LIKE '%$search_safe%'";
+  $conditions[] = "(tbl_tasks.task_title LIKE '%$search_safe%' 
+        OR tbl_tasks.description LIKE '%$search_safe%'
+        OR tbl_users.first_name LIKE '%$search_safe%'
+        OR tbl_users.last_name LIKE '%$search_safe%'
+        OR tbl_tasks.priority LIKE '%$search_safe%'
+        OR tbl_tasks.status LIKE '%$search_safe%')";
 }
+if ($priority_filter !== '')
+  $conditions[] = "tbl_tasks.priority = '$priority_filter'";
+if ($status_filter !== '')
+  $conditions[] = "tbl_tasks.status = '$status_filter'";
+
+$where_clause = count($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
+
+$order_clause = "ORDER BY tbl_tasks.created_at DESC";
+if ($sort_filter === 'due_asc')
+  $order_clause = "ORDER BY tbl_tasks.due_date ASC";
+if ($sort_filter === 'due_desc')
+  $order_clause = "ORDER BY tbl_tasks.due_date DESC";
+
+$query_string = http_build_query(array_filter([
+  'search' => $search,
+  'priority' => $priority_filter,
+  'status' => $status_filter,
+  'sort' => $sort_filter,
+]));
+
+$search_query = $query_string ? "&$query_string" : "";
 
 $offset = ($current_page - 1) * $tasks_per_page;
 
@@ -155,6 +177,16 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
+      position: relative;
+      z-index: 10;
+    }
+
+    .toolbar-right .form-select {
+      position: relative;
+      z-index: 10;
+      cursor: pointer;
+      appearance: auto;
+      -webkit-appearance: auto;
     }
 
     .table-toolbar-search {
@@ -837,6 +869,27 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
                   id="deleteSelectedBtn" disabled>
                   Delete Selected
                 </button>
+                <select class="form-select" id="filterPriority" onchange="applyFilters()"
+                  style="width:130px; padding:8px 12px; font-size:0.85rem;">
+                  <option value="">All Priorities</option>
+                  <option value="High" <?php echo (isset($_GET['priority']) && $_GET['priority'] === 'High') ? 'selected' : ''; ?>>High</option>
+                  <option value="Medium" <?php echo (isset($_GET['priority']) && $_GET['priority'] === 'Medium') ? 'selected' : ''; ?>>Medium</option>
+                  <option value="Low" <?php echo (isset($_GET['priority']) && $_GET['priority'] === 'Low') ? 'selected' : ''; ?>>Low</option>
+                </select>
+
+                <select class="form-select" id="filterStatus" onchange="applyFilters()"
+                  style="width:130px; padding:8px 12px; font-size:0.85rem;">
+                  <option value="">All Statuses</option>
+                  <option value="In Progress" <?php echo (isset($_GET['status']) && $_GET['status'] === 'In Progress') ? 'selected' : ''; ?>>In Progress</option>
+                  <option value="Completed" <?php echo (isset($_GET['status']) && $_GET['status'] === 'Completed') ? 'selected' : ''; ?>>Completed</option>
+                </select>
+
+                <select class="form-select" id="filterSort" onchange="applyFilters()"
+                  style="width:140px; padding:8px 12px; font-size:0.85rem;">
+                  <option value="">Sort: Default</option>
+                  <option value="due_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] === 'due_asc') ? 'selected' : ''; ?>>Due Date ↑</option>
+                  <option value="due_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] === 'due_desc') ? 'selected' : ''; ?>>Due Date ↓</option>
+                </select>
                 <form method="GET" class="table-toolbar-search">
                   <svg viewBox="0 0 24 24" fill="none">
                     <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -871,7 +924,7 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
   FROM tbl_tasks 
   LEFT JOIN tbl_users ON tbl_tasks.assigned_to = tbl_users.user_id
   $where_clause
-  ORDER BY tbl_tasks.created_at DESC
+  $order_clause
   LIMIT $tasks_per_page OFFSET $offset");
                     $task_count = mysqli_num_rows($select_tasks);
                     if ($task_count == 0) { ?>
@@ -914,7 +967,8 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
                               <button type="button" class="btn-act btn-details" title="Details"
                                 onclick="openTaskDetails(<?php echo (int) $row['task_id']; ?>, <?php echo htmlspecialchars(json_encode($row['task_title']), ENT_QUOTES, 'UTF-8'); ?>)">
                                 <svg viewBox="0 0 24 24" fill="none">
-                                  <path d="M12 5H12.01M12 12H12.01M12 19H12.01" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                                  <path d="M12 5H12.01M12 12H12.01M12 19H12.01" stroke="currentColor" stroke-width="3"
+                                    stroke-linecap="round" />
                                 </svg>
                               </button>
                               <button type="button" class="btn-act btn-edit" title="Edit" onclick="openEditModal(
@@ -1178,7 +1232,8 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
       <div class="modal-header">
         <p class="modal-header-title">
           <svg viewBox="0 0 24 24" fill="none">
-            <path d="M8 6H21M8 12H21M8 18H21M3 6H3.01M3 12H3.01M3 18H3.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M8 6H21M8 12H21M8 18H21M3 6H3.01M3 12H3.01M3 18H3.01" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
           </svg>
           <span id="taskDetailsTitle">Task Details</span>
         </p>
@@ -1209,7 +1264,8 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
           <button type="submit" class="btn-submit-modal">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
             Comment
           </button>
@@ -1686,6 +1742,20 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
     function closeBulkDeleteModal() {
       document.getElementById('bulkDeleteModal').classList.remove('active');
       document.body.style.overflow = '';
+    }
+
+    function applyFilters() {
+      const priority = document.getElementById('filterPriority').value;
+      const status = document.getElementById('filterStatus').value;
+      const sort = document.getElementById('filterSort').value;
+      const search = document.getElementById('searchInput').value;
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (priority) params.set('priority', priority);
+      if (status) params.set('status', status);
+      if (sort) params.set('sort', sort);
+      params.set('page', '1');
+      window.location.href = '?' + params.toString();
     }
     /* Init */
     updateCount();
