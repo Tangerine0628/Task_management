@@ -1380,20 +1380,9 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
   <?php include '../../includes/scripts.php'; ?>
 
   <script>
-    /* ════════════════════════════════════════
-       DATA
-       Replace `users = []` with your API fetch
-       when the backend is ready, e.g.:
-         users = await fetch('/api/users').then(r => r.json());
-       Keep the same shape: { id, firstName, lastName,
-       email, role, dept, location, status, joined, color }
-    ════════════════════════════════════════ */
     const AVATAR_COLORS = ['#3a8ef6', '#d63031', '#27ae60', '#8e44ad', '#e67e22', '#2d3436', '#0984e3', '#6c5ce7', '#00b894', '#e17055'];
 
-    let users = []; // ← empty; backend will populate this
-    let nextId = 1;
     let selectedUserId = null;
-    let selectedRoleInModal = null;
 
     /* ── Helpers ── */
     function initials(u) {
@@ -1407,9 +1396,6 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
       document.getElementById('toastMsg').textContent = msg;
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 3000);
-    }
-    function updateCountBadge() {
-      document.getElementById('userCountBadge').textContent = allUsers.length ? '(' + allUsers.length + ')' : '';
     }
 
     /* ── Render list ── */
@@ -1497,44 +1483,9 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
       setTimeout(() => document.getElementById('addFirstName').focus(), 100);
     }
 
-    function submitAddUser() {
-      const fn = document.getElementById('addFirstName').value.trim();
-      const ln = document.getElementById('addLastName').value.trim();
-      const email = document.getElementById('addEmail').value.trim();
-      let ok = true;
-      const validate = (val, inputId, errId, test) => {
-        const pass = test(val);
-        document.getElementById(inputId).classList.toggle('error', !pass);
-        document.getElementById(errId).style.display = pass ? 'none' : 'block';
-        if (!pass) ok = false;
-      };
-      validate(fn, 'addFirstName', 'addFirstNameErr', v => v.length > 0);
-      validate(ln, 'addLastName', 'addLastNameErr', v => v.length > 0);
-      validate(email, 'addEmail', 'addEmailErr', v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
-      const pass = document.getElementById('addPassword').value.trim();
-      validate(pass, 'addPassword', 'addPasswordErr', v => v.length >= 8);
-      if (!ok) return;
-
-      const u = {
-        id: nextId++, firstName: fn, lastName: ln, email,
-        role: document.getElementById('addRole').value,
-        status: 'Active',
-        joined: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]
-      };
-      users.unshift(u);
-      closeModal('addUserModal');
-      filterUsers();
-      updateCountBadge();
-      selectUser(u.id);
-      showToast(u.firstName + ' ' + u.lastName + ' added successfully!');
-    }
-
     /* ── Edit user ── */
     function openEditModal() {
       if (!selectedUserId) return;
-      console.log('selectedUserId:', selectedUserId);
-      console.log('about to open modal');
       const u = allUsers.find(x => x.user_id == selectedUserId);
       document.getElementById('editFirstName').value = u.first_name;
       document.getElementById('editLastName').value = u.last_name;
@@ -1547,30 +1498,6 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
       setTimeout(() => document.getElementById('editFirstName').focus(), 100);
     }
 
-    function submitEditUser() {
-      const fn = document.getElementById('editFirstName').value.trim();
-      const ln = document.getElementById('editLastName').value.trim();
-      const email = document.getElementById('editEmail').value.trim();
-      let ok = true;
-      const validate = (val, inputId, errId, test) => {
-        const pass = test(val);
-        document.getElementById(inputId).classList.toggle('error', !pass);
-        document.getElementById(errId).style.display = pass ? 'none' : 'block';
-        if (!pass) ok = false;
-      };
-      validate(fn, 'editFirstName', 'editFirstNameErr', v => v.length > 0);
-      validate(ln, 'editLastName', 'editLastNameErr', v => v.length > 0);
-      validate(email, 'editEmail', 'editEmailErr', v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
-      if (!ok) return;
-
-      const u = allUsers.find(x => x.user_id === selectedUserId);
-      u.first_name = fn; u.last_name = ln; u.email = email;
-      closeModal('editUserModal');
-      filterUsers();
-      selectUser(selectedUserId);
-      showToast(u.first_name + ' ' + u.last_name + ' updated successfully!');
-    }
-
     /* ── Change role ── */
     function openRoleModal() {
       if (!selectedUserId) return;
@@ -1578,26 +1505,14 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
       document.getElementById('roleModalName').textContent = u.first_name + ' ' + u.last_name;
       document.getElementById('roleUserId').value = selectedUserId;
       document.getElementById('roleInput').value = u.role;
-      selectedRoleInModal = u.role;
       document.querySelectorAll('.role-chip').forEach(chip => chip.classList.toggle('selected', chip.dataset.role === u.role));
       openModal('roleModal');
     }
     function selectRole(chip) {
       document.querySelectorAll('.role-chip').forEach(c => c.classList.remove('selected'));
       chip.classList.add('selected');
-      selectedRoleInModal = chip.dataset.role;
-      document.getElementById('roleInput').value = chip.dataset.role; // ← add this
+      document.getElementById('roleInput').value = chip.dataset.role;
     }
-    function submitRole() {
-      if (!selectedRoleInModal || !selectedUserId) return;
-      const u = allUsers.find(x => x.id === selectedUserId);
-      u.role = selectedRoleInModal;
-      closeModal('roleModal');
-      filterUsers();
-      selectUser(selectedUserId);
-      showToast(u.firstName + "'s role changed to " + u.role + '.');
-    }
-
     /* ── Delete user ── */
     function openDeleteModal() {
       if (!selectedUserId) return;
@@ -1606,20 +1521,6 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
       document.getElementById('deleteUserId').value = selectedUserId;
       openModal('deleteModal');
     }
-    function confirmDelete() {
-      if (!selectedUserId) return;
-      const u = allUsers.find(x => x.user_id === selectedUserId);
-      const name = u.first_name + ' ' + u.last_name;
-      users = allUsers.filter(x => x.user_id !== selectedUserId);
-      selectedUserId = null;
-      document.getElementById('umProfile').classList.remove('visible');
-      document.getElementById('emptyState').style.display = 'block';
-      closeModal('deleteModal');
-      filterUsers();
-      updateCountBadge();
-      showToast(name + ' deleted.');
-    }
-
     function openStatusModal() {
       if (!selectedUserId) return;
       const u = allUsers.find(x => x.user_id === selectedUserId);

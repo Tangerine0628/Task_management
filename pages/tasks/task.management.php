@@ -1382,27 +1382,6 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
   <?php include '../../includes/scripts.php'; ?>
   <script>
     /* ── Helpers ── */
-    function priorityClass(p) {
-      if (p === 'High') return 'badge-high';
-      if (p === 'Medium') return 'badge-medium';
-      if (p === 'Low') return 'badge-low';
-      return 'badge-pending';
-    }
-    function statusClass(s) {
-      if (s === 'In Progress') return 'badge-progress';
-      if (s === 'Completed') return 'badge-done';
-      return 'badge-pending';
-    }
-    function formatDate(dateStr) {
-      if (!dateStr) return '<span class="due-ok">—</span>';
-      const d = new Date(dateStr + 'T00:00:00');
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const diff = (d - today) / (1000 * 60 * 60 * 24);
-      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      if (diff < 0) return '<span class="due-overdue">' + label + '</span>';
-      if (diff <= 7) return '<span class="due-soon">' + label + '</span>';
-      return '<span class="due-ok">' + label + '</span>';
-    }
     function escapeHtml(str) {
       return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
@@ -1436,12 +1415,6 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
       if (emptyRow) {
         emptyRow.style.display = rows === 0 ? '' : 'none';
       }
-    }
-    function filterTable() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      document.querySelectorAll('#taskTableBody tr:not(#emptyRow)').forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
-      });
     }
 
     let activeDetailsTaskId = null;
@@ -1496,17 +1469,6 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
         .catch(() => showToast('Could not load task details.'));
     }
 
-    /* Action buttons template */
-    const actionBtns = `
-      <div class="d-flex justify-content-center gap-2">
-        <button class="btn-act btn-edit" title="Edit task" onclick="openEditModal(this)">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 19V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5C19.3284 2.5 20 3.17157 20 4C20 4.82843 18.5 6.5 18.5 6.5L12 13L8 14L9 10L15.5 3.5C16.1272 2.87281 17.3284 2.5 18.5 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="btn-act btn-delete" title="Delete task" onclick="this.closest('tr').remove(); updateCount();">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6M19 6L18.1327 19.1425C18.0579 20.1891 17.187 21 16.1378 21H7.86224C6.81296 21 5.94208 20.1891 5.86732 19.1425L5 6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>`;
-
     /* ── Add Modal ── */
     function openModal() {
       document.getElementById('addTaskModal').classList.add('active');
@@ -1529,47 +1491,7 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
       if (e.target === this) closeModal();
     });
 
-    function submitTask() {
-      const title = document.getElementById('taskTitle').value.trim();
-      const desc = document.getElementById('taskDesc').value.trim();
-      const assigneeV = document.getElementById('taskAssignee').value;
-      const due = document.getElementById('taskDue').value;
-      const priority = document.getElementById('taskPriority').value;
-      const status = document.getElementById('taskStatus').value || 'In Progress';
-
-      if (!title) {
-        document.getElementById('taskTitle').classList.add('error');
-        document.getElementById('titleError').style.display = 'block';
-        document.getElementById('taskTitle').focus();
-        return;
-      }
-      document.getElementById('taskTitle').classList.remove('error');
-      document.getElementById('titleError').style.display = 'none';
-
-      let assigneeHTML = '<span style="font-size:0.85rem;color:#adb5bd;">Unassigned</span>';
-      if (assigneeV) {
-        const [name, initials, color] = assigneeV.split('|');
-        assigneeHTML = `<div class="d-flex align-items-center"><span class="avatar-sm" style="background:${color};">${initials}</span><span style="font-size:0.85rem;margin-left:8px;">${name}</span></div>`;
-      }
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><p class="task-title">${escapeHtml(title)}</p>${desc ? '<p class="task-desc">' + escapeHtml(desc) + '</p>' : ''}</td>
-        <td>${assigneeHTML}</td>
-        <td>${priority ? '<span class="badge-pill ' + priorityClass(priority) + '">' + priority + '</span>' : '<span style="color:#adb5bd;font-size:0.85rem;">—</span>'}</td>
-        <td><span class="badge-pill ${statusClass(status)}">${status}</span></td>
-        <td>${formatDate(due)}</td>
-        <td style="text-align:center;">${actionBtns}</td>
-      `;
-      document.getElementById('taskTableBody').prepend(tr);
-      updateCount();
-      closeModal();
-      showToast('"' + title + '" added successfully!');
-    }
-
     /* ── Edit Modal ── */
-    let editingRow = null;
-
     function openEditModal(taskId, title, desc, assigneeId, due, priority, status) {
       document.getElementById('editTaskId').value = taskId;
       document.getElementById('editTitle').value = title;
@@ -1584,7 +1506,6 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
     function closeEditModal() {
       document.getElementById('editTaskModal').classList.remove('active');
       document.body.style.overflow = '';
-      editingRow = null;
     }
     document.getElementById('editTaskModal').addEventListener('click', function (e) {
       if (e.target === this) closeEditModal();
@@ -1636,53 +1557,15 @@ $total_pages = ceil($total_tasks / $tasks_per_page);
       document.body.style.overflow = '';
     }
 
-    function saveTask() {
-      const title = document.getElementById('editTitle').value.trim();
-      const desc = document.getElementById('editDesc').value.trim();
-      const priority = document.getElementById('editPriority').value;
-      const status = document.getElementById('editStatus').value || 'In Progress';
-      const due = document.getElementById('editDue').value;
-      const assigneeV = document.getElementById('editAssignee').value;
-
-      if (!title) {
-        document.getElementById('editTitle').classList.add('error');
-        document.getElementById('editTitleError').style.display = 'block';
-        document.getElementById('editTitle').focus();
-        return;
-      }
-      document.getElementById('editTitle').classList.remove('error');
-      document.getElementById('editTitleError').style.display = 'none';
-      if (!editingRow) return;
-
-      editingRow.querySelector('.task-title').textContent = title;
-      const descEl = editingRow.querySelector('.task-desc');
-      if (descEl) descEl.textContent = desc;
-
-      const pBadge = editingRow.querySelector('.badge-high, .badge-medium, .badge-low');
-      if (pBadge && priority) { pBadge.textContent = priority; pBadge.className = 'badge-pill ' + priorityClass(priority); }
-
-      const sBadge = editingRow.querySelector('.badge-progress, .badge-done, .badge-pending');
-      if (sBadge) { sBadge.textContent = status; sBadge.className = 'badge-pill ' + statusClass(status); }
-
-      editingRow.cells[5].innerHTML = formatDate(due);
-
-      if (assigneeV) {
-        const [name, initials, color] = assigneeV.split('|');
-        const avatar = editingRow.querySelector('.avatar-sm');
-        const nameEl = editingRow.querySelector('.avatar-sm + span');
-        if (avatar) { avatar.textContent = initials; avatar.style.background = color; }
-        if (nameEl) nameEl.textContent = name;
-      }
-
-      closeEditModal();
-      showToast('"' + title + '" updated successfully!');
-    }
-
-
-
     /* Escape key closes any open modal */
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { closeModal(); closeEditModal(); closeTaskDetails(); closeDeleteModal(); closeBulkDeleteModal(); }
+      if (e.key === 'Escape') {
+        closeModal();
+        closeEditModal();
+        closeTaskDetails();
+        closeDeleteModal();
+        closeBulkDeleteModal();
+      }
     });
 
     const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');

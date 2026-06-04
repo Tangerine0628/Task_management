@@ -5,10 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>TaskFlow | Login</title>
-  <link rel="shortcut icon" href="../../assets/images/favicon.ico">
-  <link rel="stylesheet" href="../../assets/css/core/libs.min.css">
-  <link rel="stylesheet" href="../../assets/css/hope-ui.min.css?v=5.0.0">
-  <link rel="stylesheet" href="../../assets/css/custom.min.css?v=5.0.0">
+  <link rel="shortcut icon" href="../../html/assets/images/favicon.ico">
+  <link rel="stylesheet" href="../../html/assets/css/core/libs.min.css">
+  <link rel="stylesheet" href="../../html/assets/css/hope-ui.min.css?v=5.0.0">
+  <link rel="stylesheet" href="../../html/assets/css/custom.min.css?v=5.0.0">
 
   <style>
     /* ── Full page layout ── */
@@ -565,8 +565,8 @@
   </div>
 
   <!-- Hope UI scripts (optional for auth page — keep if you need the loader) -->
-  <script src="../../assets/js/core/libs.min.js"></script>
-  <script src="../../assets/js/hope-ui.js" defer></script>
+  <script src="../../html/assets/js/core/libs.min.js"></script>
+  <script src="../../html/assets/js/hope-ui.js" defer></script>
 
   <script>
     /* ── Password visibility toggle ── */

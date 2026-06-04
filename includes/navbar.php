@@ -16,7 +16,7 @@
 
   .custom-drop .nav-link:hover {
     transform: translateY(-1px) !important;
-  }df
+  }
 </style>
 
 <nav class="nav navbar navbar-expand-xl navbar-light iq-navbar">

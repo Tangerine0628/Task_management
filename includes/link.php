@@ -12,11 +12,11 @@
 <link rel="stylesheet" href="../../html/assets/css/hope-ui.min.css?v=5.0.0">
 
 <!-- Custom Css -->
-<link rel="stylesheet" href="../../assets/css/custom.min.css?v=5.0.0">
+<link rel="stylesheet" href="../../html/assets/css/custom.min.css?v=5.0.0">
 
 <!-- Customizer Css -->
-<link rel="stylesheet" href="../../assets/css/customizer.min.css?v=5.0.0">
+<link rel="stylesheet" href="../../html/assets/css/customizer.min.css?v=5.0.0">
 
 <!-- RTL Css -->
-<link rel="stylesheet" href="../../assets/css/rtl.min.css?v=5.0.0">
+<link rel="stylesheet" href="../../html/assets/css/rtl.min.css?v=5.0.0">
 

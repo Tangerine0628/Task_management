@@ -1,5 +1,10 @@
 {
     "require": {
         "phpmailer/phpmailer": "^7.1"
+    },
+    "require-dev": {
+        "phpmd/phpmd": "^2.15",
+        "sebastian/phpcpd": "^6.0",
+        "phpstan/phpstan": "^2.2"
     }
 }
