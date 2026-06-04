@@ -1,22 +1,32 @@
 <?php
+// Require auth, admin guard, and DB connection
 require_once '../../includes/session.php';
 require_once '../../includes/guard.admin.php';
 require_once '../../includes/conn.php';
 
+// ── Summary stat queries ──────────────────────────────────────────────────────
+
+// Total number of registered users
 $total_users_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_users");
 $total_users = mysqli_fetch_assoc($total_users_result)['total'];
 
+// Total number of tasks across all users
 $total_tasks_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks");
 $total_tasks = mysqli_fetch_assoc($total_tasks_result)['total'];
 
+// Tasks currently in progress
 $ongoing_tasks_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE status = 'In Progress'");
 $ongoing_tasks = mysqli_fetch_assoc($ongoing_tasks_result)['total'];
 
+// Tasks marked as completed
 $completed_tasks_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE status = 'Completed'");
 $completed_tasks = mysqli_fetch_assoc($completed_tasks_result)['total'];
 
+// Tasks past their due date and not yet completed
 $overdue_tasks_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE due_date < CURDATE() AND status != 'Completed'");
 $overdue_tasks = mysqli_fetch_assoc($overdue_tasks_result)['total'];
+
+// ── Priority breakdown counts ─────────────────────────────────────────────────
 
 $high_priority_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE priority = 'High'");
 $high_priority = mysqli_fetch_assoc($high_priority_result)['total'];
@@ -27,12 +37,17 @@ $medium_priority = mysqli_fetch_assoc($medium_priority_result)['total'];
 $low_priority_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE priority = 'Low'");
 $low_priority = mysqli_fetch_assoc($low_priority_result)['total'];
 
+// ── Activity metrics ──────────────────────────────────────────────────────────
+
+// Tasks created today
 $assigned_today_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE DATE(created_at) = CURDATE()");
 $assigned_today = mysqli_fetch_assoc($assigned_today_result)['total'];
 
+// Tasks that have at least one comment
 $with_comments_result = mysqli_query($conn, "SELECT COUNT(DISTINCT task_id) AS total FROM tbl_task_comments");
 $with_comments = mysqli_fetch_assoc($with_comments_result)['total'];
 
+// ── Team performance: top 10 users by assigned task count ────────────────────
 $team_performance_result = mysqli_query($conn, "
     SELECT
         u.user_id,

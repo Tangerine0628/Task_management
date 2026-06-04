@@ -1,25 +1,32 @@
 <?php
+// Require auth, user guard, DB connection, and activity logger
 require_once '../../includes/session.php';
 require_once '../../includes/guard.user.php';
 require_once '../../includes/conn.php';
 require_once '../../includes/task_activity.php';
 
+// Get the logged-in user's ID for all queries below
 $user_id = $currentUser['user_id'];
 
-// My Tasks counts
+// ── Stat card counts for the current user ─────────────────────────────────────
+
+// Total tasks assigned to this user
 $my_tasks_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE assigned_to = $user_id");
 $my_tasks = mysqli_fetch_assoc($my_tasks_result)['total'];
 
+// Tasks this user has in progress
 $my_ongoing_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE assigned_to = $user_id AND status = 'In Progress'");
 $my_ongoing = mysqli_fetch_assoc($my_ongoing_result)['total'];
 
+// Tasks this user has completed
 $my_completed_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE assigned_to = $user_id AND status = 'Completed'");
 $my_completed = mysqli_fetch_assoc($my_completed_result)['total'];
 
+// Tasks past their due date that this user hasn't completed
 $my_overdue_result = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbl_tasks WHERE assigned_to = $user_id AND due_date < CURDATE() AND status != 'Completed'");
 $my_overdue = mysqli_fetch_assoc($my_overdue_result)['total'];
 
-// My assigned tasks list
+// ── Fetch the user's task list sorted by urgency and priority ─────────────────
 $my_tasks_list = mysqli_query($conn, "
   SELECT * FROM tbl_tasks 
   WHERE assigned_to = $user_id 
@@ -29,17 +36,23 @@ $my_tasks_list = mysqli_query($conn, "
     due_date ASC
 ");
 
-// Handle status update POST
+// ── Handle inline status update submitted from the task table ─────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['new_status'])) {
-    $task_id = (int) $_POST['task_id'];
+    $task_id    = (int) $_POST['task_id'];
     $new_status = mysqli_real_escape_string($conn, $_POST['new_status']);
-    $allowed = ['In Progress', 'Completed'];
+    $allowed    = ['In Progress', 'Completed'];
 
     if (in_array($new_status, $allowed)) {
+
+        // Confirm the task belongs to this user before updating
         $check = mysqli_query($conn, "SELECT task_id, status FROM tbl_tasks WHERE task_id = $task_id AND assigned_to = $user_id");
         if (mysqli_num_rows($check) > 0) {
             $task_before = mysqli_fetch_assoc($check);
+
+            // Apply the status update
             mysqli_query($conn, "UPDATE tbl_tasks SET status = '$new_status' WHERE task_id = $task_id");
+
+            // Log the status change in the activity table
             record_task_activity(
                 $conn,
                 $task_id,
@@ -52,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             header('Location: index2.php?error=1');
         }
     } else {
+        // Reject any status value not in the allowed list
         header('Location: index2.php?error=1');
     }
     exit;

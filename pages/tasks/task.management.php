@@ -1,25 +1,34 @@
 <?php
+// Require auth, admin guard, DB connection, and activity logger
 require_once '../../includes/session.php';
 require_once '../../includes/guard.admin.php';
 include '../../includes/conn.php';
 include '../../includes/task_activity.php';
 
+// ── Pagination setup ──────────────────────────────────────────────────────────
 
+// Number of tasks to show per page
 $tasks_per_page = 5;
 
+// Get the current page from the URL, defaulting to page 1
 $current_page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-
 if ($current_page < 1) {
   $current_page = 1;
 }
 
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$search_safe = mysqli_real_escape_string($conn, $search);
-$priority_filter = isset($_GET['priority']) ? mysqli_real_escape_string($conn, $_GET['priority']) : '';
-$status_filter = isset($_GET['status']) ? mysqli_real_escape_string($conn, $_GET['status']) : '';
-$sort_filter = isset($_GET['sort']) ? $_GET['sort'] : '';
+// ── Filter and search inputs ──────────────────────────────────────────────────
 
+// Sanitize the search term and filter values from the query string
+$search          = isset($_GET['search'])   ? trim($_GET['search']) : '';
+$search_safe     = mysqli_real_escape_string($conn, $search);
+$priority_filter = isset($_GET['priority']) ? mysqli_real_escape_string($conn, $_GET['priority']) : '';
+$status_filter   = isset($_GET['status'])   ? mysqli_real_escape_string($conn, $_GET['status'])   : '';
+$sort_filter     = isset($_GET['sort'])     ? $_GET['sort'] : '';
+
+// ── Build WHERE clause from active filters ────────────────────────────────────
 $conditions = [];
+
+// Search across task title, description, assignee name, priority, and status
 if ($search_safe !== "") {
   $conditions[] = "(tbl_tasks.task_title LIKE '%$search_safe%' 
         OR tbl_tasks.description LIKE '%$search_safe%'
@@ -33,31 +42,38 @@ if ($priority_filter !== '')
 if ($status_filter !== '')
   $conditions[] = "tbl_tasks.status = '$status_filter'";
 
+// Combine conditions into a WHERE clause if any are active
 $where_clause = count($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
 
-$order_clause = "ORDER BY tbl_tasks.created_at DESC";
+// ── Build ORDER BY clause based on sort selection ─────────────────────────────
+$order_clause = "ORDER BY tbl_tasks.created_at DESC"; // default: newest first
 if ($sort_filter === 'due_asc')
   $order_clause = "ORDER BY tbl_tasks.due_date ASC";
 if ($sort_filter === 'due_desc')
   $order_clause = "ORDER BY tbl_tasks.due_date DESC";
 
+// ── Build URL query string to preserve filters across page navigation ─────────
 $query_string = http_build_query(array_filter([
-  'search' => $search,
+  'search'   => $search,
   'priority' => $priority_filter,
-  'status' => $status_filter,
-  'sort' => $sort_filter,
+  'status'   => $status_filter,
+  'sort'     => $sort_filter,
 ]));
-
 $search_query = $query_string ? "&$query_string" : "";
 
+// ── Pagination math ───────────────────────────────────────────────────────────
+
+// Calculate the row offset for the SQL LIMIT clause
 $offset = ($current_page - 1) * $tasks_per_page;
 
+// Count total matching tasks to calculate total pages
 $total_tasks_result = mysqli_query($conn, "SELECT COUNT(*) AS total 
   FROM tbl_tasks
   LEFT JOIN tbl_users ON tbl_tasks.assigned_to = tbl_users.user_id
   $where_clause");
 $total_tasks = mysqli_fetch_assoc($total_tasks_result)['total'];
 
+// Total number of pages needed
 $total_pages = ceil($total_tasks / $tasks_per_page);
 ?>
 

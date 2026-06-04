@@ -1,7 +1,10 @@
 <?php
+// Require auth, admin guard, and DB — fetch all users ordered by newest first
 require_once '../../includes/session.php';
 require_once '../../includes/guard.admin.php';
 require_once '../../includes/conn.php';
+
+// Load all user records to populate the user list panel
 $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at DESC");
 ?>
 
