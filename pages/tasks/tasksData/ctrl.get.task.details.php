@@ -5,8 +5,6 @@ require_once '../../../includes/task_activity.php';
 
 header('Content-Type: application/json');
 
-ensure_task_collaboration_tables($conn);
-
 $task_id = isset($_GET['task_id']) ? (int) $_GET['task_id'] : 0;
 
 if ($task_id < 1) {

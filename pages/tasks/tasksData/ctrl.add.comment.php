@@ -5,8 +5,6 @@ require_once '../../../includes/task_activity.php';
 
 header('Content-Type: application/json');
 
-ensure_task_collaboration_tables($conn);
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request.']);
     exit;

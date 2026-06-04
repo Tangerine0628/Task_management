@@ -4,7 +4,7 @@ require_once '../../includes/guard.admin.php';
 include '../../includes/conn.php';
 include '../../includes/task_activity.php';
 
-ensure_task_collaboration_tables($conn);
+
 $tasks_per_page = 5;
 
 $current_page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
