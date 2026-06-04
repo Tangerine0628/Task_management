@@ -1,0 +1,6 @@
+<?php
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'User') {
+    header('Location: /task_management/pages/login/login.php');
+    exit;
+}
+?>
