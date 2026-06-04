@@ -57,7 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
     exit;
 }
 ?>
-
 <!doctype html>
 <html lang="en" dir="ltr" data-bs-theme="light" data-bs-theme-color="theme-color-default">
 
@@ -65,62 +64,154 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Task Management System | My Dashboard</title>
-
     <?php include '../../includes/link.php'; ?>
 
     <style>
-        .toast-notify {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            background: #fff;
-            border: 1px solid #e9ecef;
-            border-left: 4px solid #1cc88a;
-            border-radius: 10px;
-            padding: 12px 18px;
-            font-size: 0.875rem;
-            color: #212529;
-            font-weight: 500;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        /* ── Stat Cards (matches admin index.php) ── */
+        .stat-card {
+            border: none;
+            border-radius: 16px;
+            padding: 20px 22px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+        }
+
+        .stat-card .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            z-index: 99999;
-            opacity: 0;
-            transform: translateY(10px);
-            pointer-events: none;
-            transition: opacity 0.25s ease, transform 0.25s ease;
-        }
-
-        .toast-notify.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast-notify svg {
-            width: 18px;
-            height: 18px;
-            color: #1cc88a;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
             flex-shrink: 0;
         }
 
-
-        .btn-primary:hover {
-            color: #fff !important;
-            background-color: #2e59d9 !important;
-            border-color: #2653d4 !important;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 22px rgba(78, 115, 223, 0.52) !important;
+        .stat-card p {
+            margin: 0 0 4px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.72;
         }
 
+        .stat-card h4 {
+            margin: 0;
+            font-size: 1.9rem;
+            font-weight: 800;
+            line-height: 1;
+        }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 22px rgba(78, 115, 223, 0.52);
+        /* Card colour themes */
+        .stat-mytasks {
+            background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+        }
+
+        .stat-mytasks .stat-icon {
+            background: rgba(78, 115, 223, 0.15);
+            color: #4e73df;
+        }
+
+        .stat-mytasks h4,
+        .stat-mytasks p {
+            color: #1e3a8a;
+        }
+
+        .stat-ongoing {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+        }
+
+        .stat-ongoing .stat-icon {
+            background: rgba(255, 193, 7, 0.18);
+            color: #f59e0b;
+        }
+
+        .stat-ongoing h4,
+        .stat-ongoing p {
+            color: #78350f;
+        }
+
+        .stat-done {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+
+        .stat-done .stat-icon {
+            background: rgba(56, 176, 0, 0.15);
+            color: #22c55e;
+        }
+
+        .stat-done h4,
+        .stat-done p {
+            color: #14532d;
+        }
+
+        .stat-overdue {
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+        }
+
+        .stat-overdue .stat-icon {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .stat-overdue h4,
+        .stat-overdue p {
+            color: #7f1d1d;
+        }
+
+        /* ── Section Cards ── */
+        .section-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .section-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 1.25rem 1.5rem !important;
+        }
+
+        .section-card .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        /* ── View All Button ── */
+        .btn-view-all {
+            background: #4e73df;
             color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 7px 15px;
+            border-radius: 10px;
+            transition: background 0.15s, transform 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
         }
 
-
+        .btn-view-all:hover {
+            background: #3562c7;
+            color: #fff;
+            transform: translateY(-1px);
+        }
 
         /* ── Priority badges ── */
         .badge-priority-high {
@@ -163,12 +254,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
         }
 
         /* ── Task table ── */
-        .task-table tbody tr {
-            transition: background 0.1s;
+        .task-table thead th {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6c757d;
+            border-bottom: 2px solid #f0f0f0;
+            padding: 10px 14px;
         }
 
-        .task-table tbody tr:hover {
-            background: #f8f9fc;
+        .task-table tbody td {
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .task-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .task-table tbody tr:hover td {
+            background: #f4f7ff;
+            transition: background 0.15s;
         }
 
         .row-overdue {
@@ -179,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             background: #fff0f0 !important;
         }
 
-        /* ── Update status button ── */
+        /* ── Action buttons ── */
         .btn-update-status {
             font-size: 0.75rem;
             padding: 4px 12px;
@@ -191,27 +300,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             cursor: pointer;
         }
 
-        .btn-update-status:hover {
+        .btn-act {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+        }
+
+        .btn-act:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn-act svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .btn-edit {
+            background: #e8f0fe;
+            color: #4e73df;
+        }
+
+        .btn-edit:hover {
             background: #4e73df;
             color: #fff;
         }
 
-        .btn-task-details {
-            font-size: 0.75rem;
-            padding: 4px 12px;
-            border-radius: 6px;
-            border: 1px solid #6c757d;
-            background: transparent;
-            color: #6c757d;
-            transition: background 0.15s, color 0.15s;
-            cursor: pointer;
+        .btn-details {
+            background: #f3f4f6;
+            color: #495057;
         }
 
-        .btn-task-details:hover {
-            background: #6c757d;
+        .btn-details:hover {
+            background: #495057;
             color: #fff;
         }
 
+        /* ── Task detail modal lists ── */
         .task-detail-list {
             max-height: 230px;
             overflow-y: auto;
@@ -250,21 +381,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             padding: 22px 10px;
         }
 
-        /* ── Sidebar toggle ── */
-        .sidebar-toggle {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            border-radius: 10px !important;
-            transition: background 0.2s, color 0.2s !important;
-            color: #94a3b8 !important;
-        }
-
-        .sidebar-toggle:hover {
-            background: rgba(78, 115, 223, 0.1) !important;
-            color: #4e73df !important;
-        }
-
         /* ── Empty state ── */
         .empty-tasks {
             padding: 48px 24px;
@@ -278,18 +394,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             display: block;
         }
 
-        /* ── Completion progress card ── */
+        /* ── Completion progress ── */
         .progress-bar-track {
             background: #e9ecef;
             border-radius: 20px;
             height: 8px;
             overflow: hidden;
         }
+
+        /* ── Toast ── */
+        .toast-notify {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-left: 4px solid #1cc88a;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 0.875rem;
+            color: #212529;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 99999;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .toast-notify.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-notify svg {
+            width: 18px;
+            height: 18px;
+            color: #1cc88a;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 
 <body>
-
     <!-- Loader -->
     <div id="loading">
         <div class="loader simple-loader">
@@ -297,7 +448,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
         </div>
     </div>
 
-    <!-- User Sidebar (hardcoded for now) -->
     <?php
     $activePage = 'dashboard';
     include '../../includes/user-sidebar.php';
@@ -305,9 +455,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
 
     <main class="main-content">
         <div class="position-relative iq-banner">
-
             <?php include '../../includes/navbar.php'; ?>
-
             <div class="iq-navbar-header" style="height: 215px;">
                 <div class="container-fluid iq-container">
                     <div class="row">
@@ -326,74 +474,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
                         class="theme-color-default-img img-fluid w-100 h-100 animated-scaleX">
                 </div>
             </div>
-
         </div>
 
-        <div class="conatiner-fluid content-inner mt-n5 py-0">
+        <div class="container-fluid content-inner mt-n5 py-0">
 
             <!-- Flash messages -->
             <?php if (isset($_GET['updated'])): ?>
-                <script>document.addEventListener('DOMContentLoaded', () => showToast('Task status updated successfully!'));
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => showToast('Task status updated successfully!'));
                     window.history.replaceState({}, document.title, window.location.pathname);
                 </script>
             <?php elseif (isset($_GET['error'])): ?>
-                <script>document.addEventListener('DOMContentLoaded', () => showToast('Failed to update task status.'));
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => showToast('Failed to update task status.'));
                     window.history.replaceState({}, document.title, window.location.pathname);
                 </script>
             <?php endif; ?>
 
-            <!-- ══════════════════════════════════
-           STAT CARDS — same swiper carousel
-           style as the admin dashboard
-      ══════════════════════════════════ -->
-            <div class="row row-cols-1">
+            <!-- ── STAT CARDS ── -->
+            <div class="row row-cols-1 mb-4">
                 <div class="overflow-hidden d-slider1">
                     <ul class="p-0 m-0 mb-2 swiper-wrapper list-inline">
 
-                        <!-- My Tasks -->
-                        <li class="swiper-slide card card-slide" data-aos="fade-up" data-aos-delay="700">
-                            <div class="card-body">
-                                <div class="progress-widget">
-                                    <div class="progress-detail">
-                                        <p class="mb-2">My Tasks</p>
-                                        <h4 class="counter"><?php echo $my_tasks; ?></h4>
-                                    </div>
+                        <li class="swiper-slide card-slide" data-aos="fade-up" data-aos-delay="100">
+                            <div class="stat-card stat-mytasks">
+                                <div class="stat-icon"><i class="ti ti-clipboard-list"></i></div>
+                                <div>
+                                    <p>My Tasks</p>
+                                    <h4><?php echo $my_tasks; ?></h4>
                                 </div>
                             </div>
                         </li>
 
-                        <!-- In Progress -->
-                        <li class="swiper-slide card card-slide" data-aos="fade-up" data-aos-delay="800">
-                            <div class="card-body">
-                                <div class="progress-widget">
-                                    <div class="progress-detail">
-                                        <p class="mb-2">In Progress</p>
-                                        <h4 class="counter"><?php echo $my_ongoing; ?></h4>
-                                    </div>
+                        <li class="swiper-slide card-slide" data-aos="fade-up" data-aos-delay="200">
+                            <div class="stat-card stat-ongoing">
+                                <div class="stat-icon"><i class="ti ti-clock"></i></div>
+                                <div>
+                                    <p>In Progress</p>
+                                    <h4><?php echo $my_ongoing; ?></h4>
                                 </div>
                             </div>
                         </li>
 
-                        <!-- Completed -->
-                        <li class="swiper-slide card card-slide" data-aos="fade-up" data-aos-delay="900">
-                            <div class="card-body">
-                                <div class="progress-widget">
-                                    <div class="progress-detail">
-                                        <p class="mb-2">Completed</p>
-                                        <h4 class="counter"><?php echo $my_completed; ?></h4>
-                                    </div>
+                        <li class="swiper-slide card-slide" data-aos="fade-up" data-aos-delay="300">
+                            <div class="stat-card stat-done">
+                                <div class="stat-icon"><i class="ti ti-circle-check"></i></div>
+                                <div>
+                                    <p>Completed</p>
+                                    <h4><?php echo $my_completed; ?></h4>
                                 </div>
                             </div>
                         </li>
 
-                        <!-- Overdue -->
-                        <li class="swiper-slide card card-slide" data-aos="fade-up" data-aos-delay="1000">
-                            <div class="card-body">
-                                <div class="progress-widget">
-                                    <div class="progress-detail">
-                                        <p class="mb-2">Overdue</p>
-                                        <h4 class="counter"><?php echo $my_overdue; ?></h4>
-                                    </div>
+                        <li class="swiper-slide card-slide" data-aos="fade-up" data-aos-delay="400">
+                            <div class="stat-card stat-overdue">
+                                <div class="stat-icon"><i class="ti ti-alert-triangle"></i></div>
+                                <div>
+                                    <p>Overdue</p>
+                                    <h4><?php echo $my_overdue; ?></h4>
                                 </div>
                             </div>
                         </li>
@@ -405,16 +543,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             </div>
             <!-- END STAT CARDS -->
 
-            <!-- ══════════════════════════════════
-           TASK TABLE + PIE CHART
-      ══════════════════════════════════ -->
-            <div class="row mt-3">
+            <!-- ── TASK TABLE + RIGHT COLUMN ── -->
+            <div class="row mt-2 mb-4">
 
                 <!-- Task Table -->
-                <div class="col-md-8 col-lg-8 mb-4">
-                    <div class="card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">My Assigned Tasks</h5>
+                <div class="col-md-8 mb-4">
+                    <div class="card section-card h-100">
+                        <div class="card-header">
+                            <div>
+                                <h5 class="card-title">My Assigned Tasks</h5>
+                                <p class="mb-0 text-muted" style="font-size:0.85rem;">Sorted by urgency and priority.
+                                </p>
+                            </div>
                         </div>
                         <div class="card-body p-0">
                             <?php if (mysqli_num_rows($my_tasks_list) === 0): ?>
@@ -425,7 +565,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
                             <?php else: ?>
                                 <div class="table-responsive">
                                     <table class="table task-table mb-0 align-middle">
-                                        <thead class="table-light">
+                                        <thead class="table-light sticky-top">
                                             <tr>
                                                 <th class="ps-4">Task</th>
                                                 <th>Priority</th>
@@ -461,7 +601,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
                                                         <?php if (!empty($task['description'])): ?>
                                                             <small class="text-muted text-truncate d-block"
                                                                 style="max-width:200px;">
-                                                                <?php echo htmlspecialchars($task['description'] ?? ''); ?>
+                                                                <?php echo htmlspecialchars($task['description']); ?>
                                                             </small>
                                                         <?php endif; ?>
                                                     </td>
@@ -481,18 +621,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
                                                             <?php echo $status_label; ?>
                                                         </span>
                                                     </td>
-                                                    <td class="text-center pe-4">
+                                                    <td class="text-center pe-3">
                                                         <div class="d-flex justify-content-center gap-2">
-                                                            <button type="button" class="btn-task-details"
+                                                            <button type="button" class="btn-act btn-details"
                                                                 onclick="openTaskDetails(<?php echo (int) $task['task_id']; ?>, <?php echo htmlspecialchars(json_encode($task['task_title'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>)">
-                                                                Details
+                                                                <svg viewBox="0 0 24 24" fill="none">
+                                                                    <path d="M12 5H12.01M12 12H12.01M12 19H12.01"
+                                                                        stroke="currentColor" stroke-width="3"
+                                                                        stroke-linecap="round" />
+                                                                </svg>
                                                             </button>
-                                                            <button type="button" class="btn-update-status" data-bs-toggle="modal"
-                                                                data-bs-target="#updateStatusModal"
+                                                            <button type="button" class="btn-act btn-edit"
+                                                                data-bs-toggle="modal" data-bs-target="#updateStatusModal"
                                                                 data-task-id="<?php echo $task['task_id']; ?>"
                                                                 data-task-title="<?php echo htmlspecialchars($task['task_title'] ?? ''); ?>"
                                                                 data-task-status="<?php echo htmlspecialchars($task['status'] ?? ''); ?>">
-                                                                <i class="ti ti-edit me-1"></i>Update
+                                                                <svg viewBox="0 0 24 24" fill="none">
+                                                                    <path
+                                                                        d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 19V12"
+                                                                        stroke="currentColor" stroke-width="2"
+                                                                        stroke-linecap="round" />
+                                                                    <path
+                                                                        d="M18.5 2.5C19.3284 2.5 20 3.17157 20 4C20 4.82843 18.5 6.5 18.5 6.5L12 13L8 14L9 10L15.5 3.5C16.1272 2.87281 17.3284 2.5 18.5 2.5Z"
+                                                                        stroke="currentColor" stroke-width="2"
+                                                                        stroke-linecap="round" />
+                                                                </svg>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -507,40 +660,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
                 </div>
 
                 <!-- Right column: doughnut + progress -->
-                <div class="col-md-4 col-lg-4 mb-4 d-flex flex-column gap-3">
+                <div class="col-md-4 mb-4 d-flex flex-column gap-3">
 
                     <!-- Task Status Doughnut -->
-                    <div class="card">
+                    <div class="card section-card">
                         <div class="card-header">
                             <h5 class="card-title mb-0">Task Status Overview</h5>
+                            <p class="mb-0 text-muted" style="font-size:0.85rem;">Visual breakdown of your tasks.</p>
                         </div>
                         <div class="card-body d-flex flex-column align-items-center justify-content-center">
                             <div style="width:220px;height:220px;position:relative;">
                                 <canvas id="myTaskChart"></canvas>
-                                <div
-                                    style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-                                    <div style="font-size:1.6rem;font-weight:700;color:#2d3748;line-height:1;">
-                                        <?php echo $my_tasks; ?>
-                                    </div>
-                                    <div
-                                        style="font-size:0.65rem;color:#8898aa;text-transform:uppercase;letter-spacing:.5px;">
-                                        Total</div>
-                                </div>
                             </div>
-                            <div class="d-flex gap-4 mt-3">
+                            <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
                                 <div class="d-flex align-items-center gap-2">
                                     <span
-                                        style="width:14px;height:14px;border-radius:3px;background:#4e73df;display:inline-block;"></span>
+                                        style="width:12px;height:12px;border-radius:3px;background:#4e73df;display:inline-block;"></span>
                                     <span class="text-muted small">In Progress</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <span
-                                        style="width:14px;height:14px;border-radius:3px;background:#1cc88a;display:inline-block;"></span>
+                                        style="width:12px;height:12px;border-radius:3px;background:#1cc88a;display:inline-block;"></span>
                                     <span class="text-muted small">Completed</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <span
-                                        style="width:14px;height:14px;border-radius:3px;background:#e74a3b;display:inline-block;"></span>
+                                        style="width:12px;height:12px;border-radius:3px;background:#e74a3b;display:inline-block;"></span>
                                     <span class="text-muted small">Overdue</span>
                                 </div>
                             </div>
@@ -548,17 +693,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
                     </div>
 
                     <!-- Completion Progress -->
-                    <div class="card">
+                    <div class="card section-card">
                         <div class="card-body">
-                            <h6 class="card-title mb-3">Completion Progress</h6>
                             <?php
                             $completion_pct = $my_tasks > 0 ? round(($my_completed / $my_tasks) * 100) : 0;
                             $progress_color = $completion_pct >= 75 ? '#1cc88a' : ($completion_pct >= 40 ? '#f6a609' : '#4e73df');
                             ?>
+                            <h6 class="card-title mb-3">Completion Progress</h6>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="text-muted" style="font-size:.8rem;">Tasks completed</span>
-                                <span class="fw-semibold"
-                                    style="font-size:.9rem;color:<?php echo $progress_color; ?>;"><?php echo $completion_pct; ?>%</span>
+                                <span class="fw-semibold" style="font-size:.9rem;color:<?php echo $progress_color; ?>;">
+                                    <?php echo $completion_pct; ?>%
+                                </span>
                             </div>
                             <div class="progress-bar-track">
                                 <div
@@ -578,9 +724,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
 
         </div>
 
-        <!-- ══════════════════════════════════
-         UPDATE STATUS MODAL
-    ══════════════════════════════════ -->
+        <!-- ── UPDATE STATUS MODAL ── -->
         <div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
@@ -615,12 +759,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
                 </div>
             </div>
         </div>
-        <!-- END MODAL -->
 
-        <!-- TASK DETAILS MODAL -->
+        <!-- ── TASK DETAILS MODAL ── -->
         <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content" style="border-radius:14px;border:none;box-shadow:0 8px 32px rgba(0,0,0,0.12);">
+                <div class="modal-content"
+                    style="border-radius:14px;border:none;box-shadow:0 8px 32px rgba(0,0,0,0.12);">
                     <div class="modal-header">
                         <h6 class="modal-title fw-semibold" id="taskDetailsTitle">Task Details</h6>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -629,20 +773,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
                         <input type="hidden" id="commentTaskId">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <h6 class="mb-3" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.4px;color:#495057;">Comments</h6>
+                                <h6 class="mb-3"
+                                    style="font-size:.8rem;text-transform:uppercase;letter-spacing:.4px;color:#495057;">
+                                    Comments</h6>
                                 <div class="task-detail-list" id="taskCommentsList">
                                     <div class="task-detail-empty">Loading comments...</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <h6 class="mb-3" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.4px;color:#495057;">Activity</h6>
+                                <h6 class="mb-3"
+                                    style="font-size:.8rem;text-transform:uppercase;letter-spacing:.4px;color:#495057;">
+                                    Activity</h6>
                                 <div class="task-detail-list" id="taskActivityList">
                                     <div class="task-detail-empty">Loading activity...</div>
                                 </div>
                             </div>
                         </div>
                         <form id="taskCommentForm" class="mt-3">
-                            <textarea class="form-control" id="taskCommentText" placeholder="Add a comment..." style="min-height:76px;"></textarea>
+                            <textarea class="form-control" id="taskCommentText" placeholder="Add a comment..."
+                                style="min-height:76px;"></textarea>
                             <div class="d-flex justify-content-end mt-2">
                                 <button type="submit" class="btn btn-sm btn-primary px-4">Comment</button>
                             </div>
@@ -656,6 +805,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
         <?php include '../../includes/footer.php'; ?>
     </main>
 
+    <!-- Toast -->
     <div class="toast-notify" id="toastNotify">
         <svg viewBox="0 0 24 24" fill="none">
             <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -663,41 +813,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
         </svg>
         <span id="toastMsg">Task status updated successfully!</span>
     </div>
-    <!-- Chart.js doughnut -->
+
     <script>
-        const ctx = document.getElementById('myTaskChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['In Progress', 'Completed', 'Overdue'],
-                datasets: [{
-                    data: [<?php echo $my_ongoing; ?>, <?php echo $my_completed; ?>, <?php echo $my_overdue; ?>],
-                    backgroundColor: ['#4e73df', '#1cc88a', '#e74a3b'],
-                    hoverBackgroundColor: ['#2e59d9', '#17a673', '#be2617'],
-                    borderWidth: 2,
-                    borderColor: '#fff',
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '65%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function (ctx) {
-                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                const pct = total === 0 ? 0 : ((ctx.parsed / total) * 100).toFixed(1);
-                                return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+        // Doughnut chart
+        (function () {
+            const ctx = document.getElementById('myTaskChart');
+            if (!ctx) return;
+
+            const ongoing = <?php echo $my_ongoing; ?>;
+            const completed = <?php echo $my_completed; ?>;
+            const overdue = <?php echo $my_overdue; ?>;
+            const total = ongoing + completed + overdue || 1;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['In Progress', 'Completed', 'Overdue'],
+                    datasets: [{
+                        data: [ongoing, completed, overdue],
+                        backgroundColor: ['#4e73df', '#1cc88a', '#e74a3b'],
+                        borderColor: ['#fff', '#fff', '#fff'],
+                        borderWidth: 3,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (ctx) {
+                                    const val = ctx.parsed;
+                                    const pct = ((val / total) * 100).toFixed(1);
+                                    return ` ${ctx.label}: ${val} tasks (${pct}%)`;
+                                }
                             }
                         }
                     }
-                }
-            }
-        });
+                },
+                plugins: [{
+                    id: 'centerText',
+                    beforeDraw(chart) {
+                        const { ctx, chartArea: { width, height, left, top } } = chart;
+                        ctx.save();
+                        ctx.font = 'bold 28px sans-serif';
+                        ctx.fillStyle = '#1e3a8a';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(total, left + width / 2, top + height / 2 - 10);
+                        ctx.font = '600 12px sans-serif';
+                        ctx.fillStyle = '#6c757d';
+                        ctx.fillText('My Tasks', left + width / 2, top + height / 2 + 16);
+                        ctx.restore();
+                    }
+                }]
+            });
+        })();
 
-        // Populate modal on open
+        // Modal population
         document.getElementById('updateStatusModal').addEventListener('show.bs.modal', function (e) {
             const btn = e.relatedTarget;
             document.getElementById('modalTaskId').value = btn.dataset.taskId;
@@ -748,10 +924,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             const commentsList = document.getElementById('taskCommentsList');
             const activityList = document.getElementById('taskActivityList');
 
-            commentsList.innerHTML = data.comments.length ? data.comments.map(comment => `
+            commentsList.innerHTML = data.comments.length ? data.comments.map(c => `
                 <div class="task-detail-item">
-                    <div class="task-detail-meta">${escapeHtml(comment.author_name || 'Unknown user')} &bull; ${formatDateTime(comment.created_at)}</div>
-                    <p class="task-detail-text">${escapeHtml(comment.comment)}</p>
+                    <div class="task-detail-meta">${escapeHtml(c.author_name || 'Unknown user')} &bull; ${formatDateTime(c.created_at)}</div>
+                    <p class="task-detail-text">${escapeHtml(c.comment)}</p>
                 </div>
             `).join('') : '<div class="task-detail-empty">No comments yet.</div>';
 
@@ -767,10 +943,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             fetch('../tasks/tasksData/ctrl.get.task.details.php?task_id=' + encodeURIComponent(taskId))
                 .then(res => res.json())
                 .then(data => {
-                    if (!data.success) {
-                        showToast(data.message || 'Could not load task details.');
-                        return;
-                    }
+                    if (!data.success) { showToast(data.message || 'Could not load task details.'); return; }
                     renderTaskDetails(data);
                 })
                 .catch(() => showToast('Could not load task details.'));
@@ -780,26 +953,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ne
             e.preventDefault();
             const taskId = document.getElementById('commentTaskId').value;
             const commentText = document.getElementById('taskCommentText').value.trim();
-
-            if (!commentText) {
-                document.getElementById('taskCommentText').focus();
-                return;
-            }
+            if (!commentText) { document.getElementById('taskCommentText').focus(); return; }
 
             const formData = new FormData();
             formData.append('task_id', taskId);
             formData.append('comment', commentText);
 
-            fetch('../tasks/tasksData/ctrl.add.comment.php', {
-                method: 'POST',
-                body: formData
-            })
+            fetch('../tasks/tasksData/ctrl.add.comment.php', { method: 'POST', body: formData })
                 .then(res => res.json())
                 .then(data => {
-                    if (!data.success) {
-                        showToast(data.message || 'Could not save comment.');
-                        return;
-                    }
+                    if (!data.success) { showToast(data.message || 'Could not save comment.'); return; }
                     document.getElementById('taskCommentText').value = '';
                     showToast('Comment added.');
                     loadTaskDetails(taskId);
