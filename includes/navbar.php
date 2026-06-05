@@ -28,6 +28,14 @@
     font-size: 13px;
     font-weight: 600;
     flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .navbar-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
   }
 
   .navbar-user-info {
@@ -88,6 +96,14 @@
     font-size: 14px;
     font-weight: 600;
     flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .user-dropdown-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
   }
 
   .user-dropdown-fullname {
@@ -201,10 +217,19 @@
           $email = htmlspecialchars($currentUser['email']);
           $role = htmlspecialchars($currentUser['role']);
           $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+          $profilePic = !empty($currentUser['profile_pic'])
+            ? '/task_management/uploads/avatars/' . htmlspecialchars($currentUser['profile_pic'])
+            : null;
           ?>
           <a class="navbar-user-trigger nav-link" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
-            <div class="navbar-avatar"><?= $initials ?></div>
+            <div class="navbar-avatar">
+              <?php if ($profilePic): ?>
+                <img src="<?= $profilePic ?>" alt="<?= $firstName ?>">
+              <?php else: ?>
+                <?= $initials ?>
+              <?php endif; ?>
+            </div>
             <div class="navbar-user-info d-none d-md-block">
               <p class="navbar-user-name"><?= $firstName . ' ' . $lastName ?></p>
               <p class="navbar-user-role"><?= $role ?></p>
@@ -218,7 +243,13 @@
           <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu" aria-labelledby="userDropdown">
             <li>
               <div class="user-dropdown-header">
-                <div class="user-dropdown-avatar"><?= $initials ?></div>
+                <div class="user-dropdown-avatar">
+                  <?php if ($profilePic): ?>
+                    <img src="<?= $profilePic ?>" alt="<?= $firstName ?>">
+                  <?php else: ?>
+                    <?= $initials ?>
+                  <?php endif; ?>
+                </div>
                 <div>
                   <p class="user-dropdown-fullname"><?= $firstName . ' ' . $lastName ?></p>
                   <p class="user-dropdown-email"><?= $email ?></p>

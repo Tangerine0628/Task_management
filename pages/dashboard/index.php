@@ -48,11 +48,13 @@ $with_comments_result = mysqli_query($conn, "SELECT COUNT(DISTINCT task_id) AS t
 $with_comments = mysqli_fetch_assoc($with_comments_result)['total'];
 
 // ── Team performance: top 10 users by assigned task count ────────────────────
+// ── Team performance: top 10 users by assigned task count ────────────────
 $team_performance_result = mysqli_query($conn, "
     SELECT
         u.user_id,
         u.first_name,
         u.last_name,
+        u.profile_pic,
         COUNT(t.task_id) AS assigned,
         SUM(t.status = 'Completed') AS completed,
         SUM(t.status = 'In Progress') AS ongoing,
@@ -274,6 +276,14 @@ $team_performance_result = mysqli_query($conn, "
       justify-content: center;
       margin-right: 8px;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .member-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
     }
 
     .progress-bar-sm {
@@ -546,14 +556,22 @@ $team_performance_result = mysqli_query($conn, "
                     foreach ($members as $member):
                       $initials = strtoupper(substr($member['first_name'], 0, 1) . substr($member['last_name'], 0, 1));
                       $pct = $max_assigned > 0 ? round(($member['assigned'] / $max_assigned) * 100) : 0;
+                      $memberPic = !empty($member['profile_pic'])
+                        ? '/task_management/uploads/avatars/' . htmlspecialchars($member['profile_pic'])
+                        : null;
                       ?>
                       <tr>
                         <td><span class="text-muted"><?php echo $member['user_id']; ?></span></td>
                         <td>
                           <div class="d-flex align-items-center">
-                            <span class="member-avatar"><?php echo $initials; ?></span>
-                            <span
-                              class="fw-600"><?php echo htmlspecialchars($member['first_name'] . ' ' . $member['last_name']); ?></span>
+                            <span class="member-avatar" <?php if (!$memberPic) echo 'style="background:#4e73df;"'; ?>>
+                              <?php if ($memberPic): ?>
+                                <img src="<?php echo $memberPic; ?>" alt="<?php echo htmlspecialchars($member['first_name']); ?>">
+                              <?php else: ?>
+                                <?php echo $initials; ?>
+                              <?php endif; ?>
+                            </span>
+                            <span class="fw-600"><?php echo htmlspecialchars($member['first_name'] . ' ' . $member['last_name']); ?></span>
                           </div>
                         </td>
                         <td>

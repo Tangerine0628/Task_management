@@ -35,7 +35,66 @@
       color: #fff;
       flex-shrink: 0;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+      overflow: hidden;
+      position: relative;
     }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    /* Camera overlay on hover */
+    .avatar-upload-wrap {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .avatar-upload-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.18s;
+    }
+
+    .avatar-upload-wrap:hover .avatar-upload-overlay {
+      opacity: 1;
+    }
+
+    .avatar-upload-overlay svg {
+      width: 22px;
+      height: 22px;
+      color: #fff;
+    }
+
+    .avatar-upload-input {
+      display: none;
+    }
+
+    /* Remove photo button — lives inside the edit modal */
+    .btn-remove-photo {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: #d63031;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-remove-photo:hover { color: #b71c1c; }
 
     .profile-card {
       background: #fff;
@@ -492,7 +551,17 @@
 
             <div class="profile-card-header">
               <div class="d-flex align-items-center gap-3" style="gap: 20px;">
-                <div class="profile-avatar" id="profileAvatar"></div>
+                <!-- Avatar — click to upload new photo -->
+                <div class="avatar-upload-wrap" onclick="document.getElementById('avatarInput').click()" title="Change photo">
+                  <div class="profile-avatar" id="profileAvatar"></div>
+                  <div class="avatar-upload-overlay">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  </div>
+                  <input type="file" id="avatarInput" class="avatar-upload-input" accept="image/jpeg,image/png,image/webp,image/gif">
+                </div>
                 <div>
                   <h4 class="mb-1" id="profileName" style="font-weight:700;"></h4>
                   <p class="mb-1 text-muted" style="font-size:0.875rem;" id="profileEmail"></p>
@@ -621,6 +690,16 @@
           <input class="form-input" type="email" id="editEmail">
           <span class="form-error" id="editEmailErr">Enter a valid email.</span>
         </div>
+        <!-- Only shown when the user has a profile photo -->
+        <div id="removePhotoRow" style="display:none; margin-top:4px; padding-top:12px; border-top:1px solid #f0f2f5;">
+          <button type="button" class="btn-remove-photo" onclick="removePhoto()">
+            <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;margin-right:5px;vertical-align:middle;">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M15 9L9 15M9 9L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Remove profile photo
+          </button>
+        </div>
       </div>
       <div class="modal-ftr">
         <button class="btn-cancel-modal" onclick="closeEditModal()">Cancel</button>
@@ -700,7 +779,8 @@
       role: "<?= htmlspecialchars($currentUser['role']) ?>",
       status: "<?= htmlspecialchars($currentUser['status']) ?>",
       joined: "<?= date('M d, Y', strtotime($currentUser['created_at'])) ?>",
-      color: "#4e73df"
+      color: "#4e73df",
+      profilePic: <?= !empty($currentUser['profile_pic']) ? json_encode('/task_management/uploads/avatars/' . $currentUser['profile_pic']) : 'null' ?>
     };
 
     function initials(u) {
@@ -708,8 +788,10 @@
       return ((u.firstName[0] || '') + (u.lastName[0] || '')).toUpperCase();
     }
 
-    function showToast(msg) {
+    function showToast(msg, success = true) {
       const t = document.getElementById('toastNotify');
+      t.style.borderLeftColor = success ? '#1cc88a' : '#d63031';
+      t.querySelector('svg').style.color = success ? '#1cc88a' : '#d63031';
       document.getElementById('toastMsg').textContent = msg;
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 3000);
@@ -723,8 +805,15 @@
       const fullName = (userData.firstName + ' ' + userData.lastName).trim() || 'No Name Set';
 
       const av = document.getElementById('profileAvatar');
-      av.textContent = initials(userData);
-      av.style.background = userData.color;
+
+      // Show photo if available, otherwise show initials
+      if (userData.profilePic) {
+        av.innerHTML = `<img src="${userData.profilePic}" alt="Profile photo">`;
+        av.style.background = 'transparent';
+      } else {
+        av.textContent = initials(userData);
+        av.style.background = userData.color;
+      }
 
       document.getElementById('profileName').textContent = fullName;
       document.getElementById('profileEmail').textContent = userData.email || '—';
@@ -745,12 +834,66 @@
       document.getElementById('infoFullName').textContent = fullName;
     }
 
+    // Handle avatar file selection — upload immediately on change
+    document.getElementById('avatarInput').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+
+      // Client-side size check (2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('File is too large. Max 2MB.', false);
+        this.value = '';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('profile_pic', file);
+
+      fetch('ctrlData/ctrl.upload.pfp.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            // Update the avatar preview immediately without a page reload
+            userData.profilePic = '/task_management/uploads/avatars/' + data.filename;
+            renderProfile();
+            showToast('Profile photo updated!', true);
+          } else {
+            showToast(data.message || 'Upload failed.', false);
+          }
+        })
+        .catch(() => showToast('Something went wrong.', false));
+
+      // Reset input so the same file can be re-selected if needed
+      this.value = '';
+    });
+
+    // Remove the current profile photo
+    function removePhoto() {
+      fetch('ctrlData/ctrl.remove.pfp.php', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            userData.profilePic = null;  // clear photo from local state
+            renderProfile();             // revert avatar back to initials
+            closeEditModal();            // close the modal
+            showToast('Profile photo removed.', true);
+          } else {
+            showToast(data.message || 'Failed to remove photo.', false);
+          }
+        })
+        .catch(() => showToast('Something went wrong.', false));
+    }
+
     function openEditModal() {
       document.getElementById('editFirstName').value = userData.firstName;
       document.getElementById('editLastName').value = userData.lastName;
       document.getElementById('editEmail').value = userData.email;
       ['editFirstName', 'editLastName', 'editEmail'].forEach(id => document.getElementById(id).classList.remove('error'));
       ['editFirstNameErr', 'editLastNameErr', 'editEmailErr'].forEach(id => document.getElementById(id).style.display = 'none');
+
+      // Show remove photo option only if the user has a photo
+      document.getElementById('removePhotoRow').style.display = userData.profilePic ? 'block' : 'none';
+
       document.getElementById('editProfileModal').classList.add('active');
       document.body.style.overflow = 'hidden';
       setTimeout(() => document.getElementById('editFirstName').focus(), 100);
@@ -791,21 +934,18 @@
       formData.append('last_name', ln);
       formData.append('email', email);
 
-      fetch('ctrlData/ctrl.editprofile.php', {
-        method: 'POST',
-        body: formData
-      })
+      fetch('ctrlData/ctrl.editprofile.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
           if (data.success) {
             closeEditModal();
-            showToast('Profile updated successfully!');
+            showToast('Profile updated successfully!', true);
             setTimeout(() => window.location.reload(), 1000);
           } else {
-            showToast(data.message || 'Failed to update profile.');
+            showToast(data.message || 'Failed to update profile.', false);
           }
         })
-        .catch(() => showToast('Something went wrong.'));
+        .catch(() => showToast('Something went wrong.', false));
     }
 
     function confirmLogout() {
