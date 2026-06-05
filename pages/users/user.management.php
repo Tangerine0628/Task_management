@@ -347,6 +347,7 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
       font-weight: 700;
       color: #fff;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     .um-profile-name {
@@ -947,6 +948,7 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
                     echo "role: " . json_encode($row['role']) . ",";
                     echo "status: " . json_encode($row['status']) . ",";
                     echo "created_at: " . json_encode($row['created_at']) . ",";
+                    echo "profile_pic: " . (!empty($row['profile_pic']) ? json_encode('/task_management/uploads/avatars/' . $row['profile_pic']) : 'null') . ",";
                     echo "color: " . json_encode($colors[$i % count($colors)]);
                     echo "},";
                     $i++;
@@ -1414,7 +1416,11 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
         div.dataset.id = u.user_id;
         div.onclick = () => selectUser(u.user_id);
         div.innerHTML = `
-          <div class="um-avatar" style="background:${u.color}">${initials(u)}</div>
+          <div class="um-avatar" style="background:${u.profile_pic ? 'transparent' : u.color}; overflow:hidden;">
+            ${u.profile_pic
+              ? `<img src="${u.profile_pic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${escHtml(u.first_name)}">`
+              : initials(u)}
+          </div>
           <div style="flex:1;min-width:0">
             <p class="um-li-name">${escHtml(u.first_name + ' ' + u.last_name)}</p>
             <p class="um-li-role">${escHtml(u.role)}</p>
@@ -1446,8 +1452,14 @@ $select_user = mysqli_query($conn, "SELECT * FROM tbl_users ORDER BY created_at 
       document.getElementById('emptyState').style.display = 'none';
       document.getElementById('umProfile').classList.add('visible');
 
-      document.getElementById('profAvatar').textContent = initials(u);
-      document.getElementById('profAvatar').style.background = u.color;
+      const profAv = document.getElementById('profAvatar');
+      if (u.profile_pic) {
+        profAv.innerHTML = `<img src="${u.profile_pic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${escHtml(u.first_name)}">`;
+        profAv.style.background = 'transparent';
+      } else {
+        profAv.textContent = initials(u);
+        profAv.style.background = u.color;
+      }
       document.getElementById('profName').textContent = u.first_name + ' ' + u.last_name;
 
       const rb = document.getElementById('profRoleBadge');
